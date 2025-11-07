@@ -1,0 +1,5 @@
+code_server_version: "4.105.1" # pick a released tag from https://github.com/coder/code-server/releases
+code_server_port: 8080
+code_server_user: iiab-editor
+code_server_install_dir: /opt/iiab/editor
+code_server_password: "changeme" # override in group/host vars or via vault in production

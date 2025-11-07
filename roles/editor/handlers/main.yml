@@ -1,0 +1,9 @@
+- name: daemon-reload
+  command: systemctl daemon-reload
+  become: yes
+
+- name: restart code-server
+  systemd:
+    name: code-server-iiab.service
+    state: restarted
+  become: yes

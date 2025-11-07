@@ -1,0 +1,54 @@
+- name: Ensure code-server system user exists
+  user:
+    name: "{{ code_server_user }}"
+    system: yes
+    create_home: yes
+    shell: /usr/sbin/nologin
+
+- name: Create install directory
+  file:
+    path: "{{ code_server_install_dir }}"
+    state: directory
+    owner: "{{ code_server_user }}"
+    group: "{{ code_server_user }}"
+    mode: '0755'
+
+- name: Download code-server release tarball
+  get_url:
+    url: "https://github.com/coder/code-server/releases/download/v{{ code_server_version }}/code-server-{{ code_server_version }}-linux-amd64.tar.gz"
+    dest: "/tmp/code-server-{{ code_server_version }}.tar.gz"
+    mode: '0644'
+  register: cs_download
+  retries: 3
+  delay: 5
+  until: cs_download is succeeded
+
+- name: Extract code-server into install dir
+  unarchive:
+    src: "/tmp/code-server-{{ code_server_version }}.tar.gz"
+    dest: "{{ code_server_install_dir }}"
+    remote_src: yes
+    extra_opts: [--strip-components=1]
+  notify: restart code-server
+
+- name: Ensure /usr/local/bin/code-server symlink
+  file:
+    src: "{{ code_server_install_dir }}/bin/code-server"
+    dest: /usr/local/bin/code-server
+    state: link
+    force: yes
+
+- name: Install systemd unit for code-server
+  template:
+    src: code-server.service.j2
+    dest: /etc/systemd/system/code-server-iiab.service
+    mode: '0644'
+  notify:
+    - daemon-reload
+    - restart code-server
+
+- name: Start and enable code-server service
+  systemd:
+    name: code-server-iiab.service
+    enabled: yes
+    state: started
